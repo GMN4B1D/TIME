@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Stylish Timer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            transition: background 0.5s ease;
+        }
+
+        /* Setup Panel */
+        .setup-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            z-index: 10;
+            transition: opacity 0.3s ease;
+        }
+
+        .setup-container.hidden {
+            opacity: 0;
+            pointer-events: none;
+            display: none;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 2px;
+            color: #38bdf8;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: #cbd5e1;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+        }
+
+        input[type="color"] {
+            padding: 5px;
+            height: 45px;
+            cursor: pointer;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .row .input-group {
+            flex: 1;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.3s, transform 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        /* Timer Fullscreen View */
+        .timer-view {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 5;
+        }
+
+        .timer-display {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12vw;
+            font-weight: 900;
+            text-align: center;
+            letter-spacing: 4px;
+            user-select: none;
+            transition: all 0.3s ease;
+        }
+
+        /* Timer Styles / Animations */
+        .style-neon .timer-display {
+            color: #38bdf8;
+            text-shadow: 0 0 20px rgba(56, 189, 248, 0.8),
+                         0 0 40px rgba(56, 189, 248, 0.6),
+                         0 0 80px rgba(56, 189, 248, 0.4);
+            animation: pulse-neon 2s infinite alternate;
+        }
+
+        .style-minimal .timer-display {
+            color: #ffffff;
+            font-weight: 400;
+        }
+
+        .style-retro .timer-display {
+            color: #facc15;
+            text-shadow: 4px 4px 0px #b45309;
+        }
+
+        @keyframes pulse-neon {
+            0% { transform: scale(1); filter: brightness(1); }
+            100% { transform: scale(1.02); filter: brightness(1.2); }
+        }
+
+        /* Controls Panel (Hidden by default in Fullscreen, appears on click) */
+        .controls-overlay {
+            position: absolute;
+            bottom: 40px;
+            display: flex;
+            gap: 15px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 15px 30px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            transform: translateY(20px);
+        }
+
+        .controls-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s, transform 0.2s;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .control-btn.danger {
+            background: rgba(239, 68, 68, 0.4);
+        }
+        .control-btn.danger:hover {
+            background: rgba(239, 68, 68, 0.7);
+        }
+
+        .hint-text {
+            position: absolute;
+            bottom: 15px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+        .hint-text.visible {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Setup Dashboard -->
+    <div class="setup-container" id="setupContainer">
+        <h1>STYLISH TIMER</h1>
+        
+        <div class="input-group">
+            <label>Timer Mode</label>
+            <select id="timerMode">
+                <option value="countdown">Countdown (Ulta Timer)</option>
+                <option value="countup">Count-up (1 theke shuru)</option>
+            </select>
+        </div>
+
+        <div class="row" id="durationInputs">
+            <div class="input-group">
+                <label>Minutes</label>
+                <input type="number" id="inputMin" value="5" min="0">
+            </div>
+            <div class="input-group">
+                <label>Seconds</label>
+                <input type="number" id="inputSec" value="0" min="0" max="59">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Design Theme</label>
+            <select id="themeSelect">
+                <option value="style-neon">Neon Glow Animation</option>
+                <option value="style-minimal">Minimal Clean</option>
+                <option value="style-retro">Retro Digital</option>
+            </select>
+        </div>
+
+        <div class="row">
+            <div class="input-group">
+                <label>Background Color</label>
+                <input type="color" id="bgColor" value="#0f172a">
+            </div>
+            <div class="input-group">
+                <label>Sound Effect</label>
+                <select id="soundOption">
+                    <option value="beep">Digital Beep</option>
+                    <option value="chime">Soft Chime</option>
+                    <option value="none">Mute / None</option>
+                </select>
+            </div>
+        </div>
+
+        <button class="btn-primary" id="startBtn">Start Fullscreen Timer</button>
+    </div>
+
+    <!-- Timer View -->
+    <div class="timer-view style-neon" id="timerView">
+        <div class="timer-display" id="timerDisplay">05:00</div>
+        
+        <div class="controls-overlay" id="controlsOverlay">
+            <button class="control-btn" id="pauseResumeBtn">Pause</button>
+            <button class="control-btn" id="resetBtn">Reset</button>
+            <button class="control-btn danger" id="exitBtn">Exit Fullscreen</button>
+        </div>
+        <div class="hint-text" id="hintText">Click anywhere to show/hide controls</div>
+    </div>
+
+    <script>
+        const setupContainer = document.getElementById('setupContainer');
+        const timerView = document.getElementById('timerView');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const startBtn = document.getElementById('startBtn');
+        const timerMode = document.getElementById('timerMode');
+        const durationInputs = document.getElementById('durationInputs');
+        const inputMin = document.getElementById('inputMin');
+        const inputSec = document.getElementById('inputSec');
+        const themeSelect = document.getElementById('themeSelect');
+        const bgColor = document.getElementById('bgColor');
+        const soundOption = document.getElementById('soundOption');
+        
+        const controlsOverlay = document.getElementById('controlsOverlay');
+        const pauseResumeBtn = document.getElementById('pauseResumeBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const exitBtn = document.getElementById('exitBtn');
+        const hintText = document.getElementById('hintText');
+
+        let timerInterval = null;
+        let totalSeconds = 0;
+        let remainingSeconds = 0;
+        let isRunning = false;
+        let isPaused = false;
+        let inactivityTimer = null;
+
+        // Toggle inputs based on mode
+        timerMode.addEventListener('change', () => {
+            if (timerMode.value === 'countup') {
+                durationInputs.style.display = 'none';
+            } else {
+                durationInputs.style.display = 'flex';
+            }
+        });
+
+        // Web Audio API Sound Generator
+        function playSound(type) {
+            if (type === 'none') return;
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'beep') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.15);
+                } else if (type === 'chime') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5 note
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.8);
+                }
+            } catch (e) {
+                console.log("Audio not supported or blocked");
+            }
+        }
+
+        // Start Timer & Enter Fullscreen
+        startBtn.addEventListener('click', () => {
+            const mode = timerMode.value;
+            if (mode === 'countdown') {
+                const mins = parseInt(inputMin.value) || 0;
+                const secs = parseInt(inputSec.value) || 0;
+                totalSeconds = (mins * 60) + secs;
+                if (totalSeconds <= 0) {
+                    alert('Please enter a valid time greater than 0');
+                    return;
+                }
+                remainingSeconds = totalSeconds;
+            } else {
+                remainingSeconds = 0;
+            }
+
+            // Apply Theme & Background
+            timerView.className = `timer-view ${themeSelect.value}`;
+            document.body.style.background = bgColor.value;
+
+            // Hide Setup, Start Timer
+            setupContainer.classList.add('hidden');
+            
+            // Request Fullscreen
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log("Fullscreen error:", err);
+                });
+            }
+
+            updateDisplay();
+            startTimer();
+            showHintAndControlsTemporarily();
+        });
+
+        function startTimer() {
+            isRunning = true;
+            isPaused = false;
+            pauseResumeBtn.textContent = "Pause";
+
+            timerInterval = setInterval(() => {
+                const mode = timerMode.value;
+                if (mode === 'countdown') {
+                    if (remainingSeconds > 0) {
+                        remainingSeconds--;
+                        updateDisplay();
+                        if (remainingSeconds === 0) {
+                            playSound(soundOption.value);
+                            clearInterval(timerInterval);
+                            isRunning = false;
+                            pauseResumeBtn.textContent = "Finished";
+                        }
+                    }
+                } else {
+                    remainingSeconds++;
+                    updateDisplay();
+                }
+            }, 1000);
+        }
+
+        function updateDisplay() {
+            const mins = Math.floor(Math.abs(remainingSeconds) / 60);
+            const secs = Math.abs(remainingSeconds) % 60;
+            const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            timerDisplay.textContent = formatted;
+        }
+
+        // Controls
+        pauseResumeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!isRunning && !isPaused) return;
+
+            if (isPaused) {
+                startTimer();
+            } else {
+                clearInterval(timerInterval);
+                isPaused = true;
+                isRunning = false;
+                pauseResumeBtn.textContent = "Resume";
+            }
+        });
+
+        resetBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            clearInterval(timerInterval);
+            if (timerMode.value === 'countdown') {
+                const mins = parseInt(inputMin.value) || 0;
+                const secs = parseInt(inputSec.value) || 0;
+                remainingSeconds = (mins * 60) + secs;
+            } else {
+                remainingSeconds = 0;
+            }
+            updateDisplay();
+            startTimer();
+        });
+
+        exitBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            stopEverything();
+        });
+
+        function stopEverything() {
+            clearInterval(timerInterval);
+            isRunning = false;
+            isPaused = false;
+            if (document.fullscreenElement) {
+                document.exitFullscreen().catch(() => {});
+            }
+            timerView.className = "timer-view style-neon";
+            document.body.style.background = "linear-gradient(135deg, #0f172a, #1e293b)";
+            setupContainer.classList.remove('hidden');
+            controlsOverlay.classList.remove('visible');
+            hintText.classList.remove('visible');
+        }
+
+        // Listen for fullscreen change (if user presses ESC key)
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) {
+                stopEverything();
+            }
+        });
+
+        // Click anywhere on screen in Fullscreen to show/hide controls
+        timerView.addEventListener('click', () => {
+            showHintAndControlsTemporarily();
+        });
+
+        function showHintAndControlsTemporarily() {
+            controlsOverlay.classList.add('visible');
+            hintText.classList.add('visible');
+
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(() => {
+                controlsOverlay.classList.remove('visible');
+                hintText.classList.remove('visible');
+            }, 3500); // 3.5 seconds pore control gulo hide hoye jabe
+        }
+    </script>
+</body>
+</html>
